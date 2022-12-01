@@ -64,6 +64,7 @@ const authenticateToken = (request, response, next) => {
   } else {
     jwt.verify(jwtToken, "MY_SECRET_TOKEN", async (error, payload) => {
       if (error) {
+        response.status(401);
         response.send("Invalid JWT Token");
       } else {
         request.username = payload.username;
@@ -238,9 +239,12 @@ app.put(
 //API7 -Returns the statistics of total cases,
 //cured, active, deaths of a specific state based on state ID
 
-app.get("/states/:stateId/stats/", async (request, response) => {
-  const { stateId } = request.params;
-  const getStatQuery = `
+app.get(
+  "/states/:stateId/stats/",
+  authenticateToken,
+  async (request, response) => {
+    const { stateId } = request.params;
+    const getStatQuery = `
     SELECT
         SUM (cases) AS totalCases,
         SUM (cured) AS totalCured,
@@ -253,9 +257,10 @@ app.get("/states/:stateId/stats/", async (request, response) => {
         state_id = ${stateId}
         ;
   `;
-  const statArray = await db.get(getStatQuery);
-  response.send(statArray);
-});
+    const statArray = await db.get(getStatQuery);
+    response.send(statArray);
+  }
+);
 
 //API8 - Returns an object containing the
 //state name of a district based on the district ID
